@@ -5,6 +5,7 @@
 #include <std_srvs/Empty.h>
 #include <boost/thread/recursive_mutex.hpp>
 #include <std_msgs/Float32.h>
+#include <std_srvs/SetBool.h>
 
 class ClosestPoint
 {
@@ -31,10 +32,10 @@ public:
         _scan_pub = _nh_priv.advertise<sensor_msgs::LaserScan>(scan_out_topic,10);
         _min_dist_pub = _nh_priv.advertise<std_msgs::Float32>(min_dist_out_topic,10);
         _mask_pub = _nh_priv.advertise<sensor_msgs::LaserScan>(mask_out_topic,10);
-        _reset_srv = _nh_priv.advertiseService("reset_mask", &ClosestPoint::reset,this);
+        _reset_srv = _nh_priv.advertiseService("scan_contours", &ClosestPoint::scanContours,this);
     }
     void findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& scan_in);
-    bool reset(std_srvs::EmptyRequest& ,std_srvs::EmptyResponse& );
+    bool scanContours(std_srvs::SetBoolRequest& req,std_srvs::SetBoolResponse& resp);
 protected:
     ros::Subscriber _scan_sub;
     ros::Publisher _scan_pub,_mask_pub;

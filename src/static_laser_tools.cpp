@@ -1,13 +1,20 @@
 #include <static_laser_tools/static_laser_tools.hpp>
-#include <boost/graph/graph_concepts.hpp>
 
-bool ClosestPoint::reset(std_srvs::EmptyRequest&, std_srvs::EmptyResponse&)
+bool ClosestPoint::scanContours(std_srvs::SetBoolRequest& req,std_srvs::SetBoolResponse& resp)
 {
     boost::recursive_mutex::scoped_lock lock(_mutex);
-    _status = INITIALIZATION;
     _current_scan_idx = 0;
-    for(int i = 0;i<_mask.size();i++)
-        _mask[i] = std::numeric_limits<double>::quiet_NaN();
+    
+    if(req.data)
+    {
+        _status = INITIALIZATION;
+        for(int i = 0;i<_mask.size();i++)
+            _mask[i] = std::numeric_limits<double>::quiet_NaN();
+    }else
+    {
+        _status = LEARNING;
+    }
+    resp.success = true;
     return true;
 }
 
@@ -35,15 +42,17 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
                 _status = PROCESSING;
                 break;
             }
-            for(int i=0;i<_scan_min.ranges.size();i++)
+            for(int i=0;i<scan_in->ranges.size();i++)
             {
                 if(std::isnan(_mask[i]) ||
                     ( !std::isnan(scan_in->ranges[i]) &&
-                    scan_in->ranges[i] < _mask[i]))
+                    scan_in->ranges[i] <= _mask[i]))
                 {
                     _mask[i] = scan_in->ranges[i] - _final_offset;
                 }
             }
+            for(int i=0;i<scan_in->ranges.size();i++)
+                _scan_min.ranges[i] = _mask[i];
         }break;
         
         case PROCESSING:
@@ -73,9 +82,8 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
     sensor_msgs::LaserScan mask;
     mask = *scan_in;
     for(int i=0;i<scan_in->ranges.size();i++)
-    {
         mask.ranges[i] = _mask[i];
-    }
+
     _mask_pub.publish(mask);
     _scan_pub.publish(_scan_min);
 }
