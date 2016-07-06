@@ -4,21 +4,21 @@
 bool ClosestPoint::reset(std_srvs::EmptyRequest&, std_srvs::EmptyResponse&)
 {
     boost::recursive_mutex::scoped_lock lock(_mutex);
-    _status = FIRST_CALLBACK;
+    _status = INITIALIZATION;
     _current_scan_idx = 0;
     for(int i = 0;i<_mask.size();i++)
         _mask[i] = std::numeric_limits<double>::quiet_NaN();
     return true;
 }
 
-void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& scan_in)//(const sensor_msgs::LaserScan_< std::allocator >::ConstPtr& scan_in)
+void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& scan_in)
 {
     double min_dist = 1e6;
     boost::recursive_mutex::scoped_lock lock(_mutex);
     _scan_min = *scan_in;
     switch(_status)
     {
-        case FIRST_CALLBACK:
+        case INITIALIZATION:
         {
             ROS_INFO("-- First callback, copying data..");
            _mask = scan_in->ranges;
@@ -41,13 +41,13 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
                     ( !std::isnan(scan_in->ranges[i]) &&
                     scan_in->ranges[i] < _mask[i]))
                 {
-                    _mask[i] = scan_in->ranges[i];
+                    _mask[i] = scan_in->ranges[i] - _final_offset;
                 }
             }
         }break;
         
         case PROCESSING:
-        {           
+        {
             for(int i=0;i<_scan_min.ranges.size();i++)
             {
                 if(!std::isnan(scan_in->ranges[i]) &&
@@ -61,6 +61,7 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
                 if(_scan_min.ranges[i] < min_dist)
                     min_dist = _scan_min.ranges[i];
             }
+            
             std_msgs::Float32 d;
             d.data = min_dist;
             _min_dist_pub.publish(d);
@@ -69,6 +70,13 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
         default:
             break;
     }
+    sensor_msgs::LaserScan mask;
+    mask = *scan_in;
+    for(int i=0;i<scan_in->ranges.size();i++)
+    {
+        mask.ranges[i] = _mask[i];
+    }
+    _mask_pub.publish(mask);
     _scan_pub.publish(_scan_min);
 }
 

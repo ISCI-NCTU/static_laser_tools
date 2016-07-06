@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv)
 {
-    ros::init(argc,argv,"closest_point");
+    ros::init(argc,argv,"laser_scan_cp");
     ros::NodeHandle nh_priv("~");
     ClosestPoint cp(nh_priv);
     ros::spin();
