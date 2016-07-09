@@ -4,7 +4,7 @@ bool ClosestPoint::scanContours(std_srvs::SetBoolRequest& req,std_srvs::SetBoolR
 {
     boost::recursive_mutex::scoped_lock lock(_mutex);
     _current_scan_idx = 0;
-    
+
     if(req.data)
     {
         _status = INITIALIZATION;
@@ -21,6 +21,7 @@ bool ClosestPoint::scanContours(std_srvs::SetBoolRequest& req,std_srvs::SetBoolR
 void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& scan_in)
 {
     double min_dist = 1e6;
+    bool has_min = false;
     boost::recursive_mutex::scoped_lock lock(_mutex);
     _scan_min = *scan_in;
     switch(_status)
@@ -31,7 +32,7 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
            _mask = scan_in->ranges;
            _status = LEARNING;
         }break;
-        
+
         case LEARNING:
         {
             ROS_INFO("-- Learning %d/%d",_current_scan_idx,_nb_scans_init);
@@ -54,7 +55,7 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
             for(int i=0;i<scan_in->ranges.size();i++)
                 _scan_min.ranges[i] = _mask[i];
         }break;
-        
+
         case PROCESSING:
         {
             for(int i=0;i<_scan_min.ranges.size();i++)
@@ -67,15 +68,19 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
                 {
                     _scan_min.ranges[i] = std::numeric_limits<double>::quiet_NaN();
                 }
-                if(_scan_min.ranges[i] < min_dist)
+                if(_scan_min.ranges[i] < min_dist){
                     min_dist = _scan_min.ranges[i];
+                    has_min = true;
+                }
             }
-            
-            std_msgs::Float32 d;
-            d.data = min_dist;
-            _min_dist_pub.publish(d);
+            if(has_min)
+            {
+              std_msgs::Float32 d;
+              d.data = min_dist;
+              _min_dist_pub.publish(d);
+            }
         }break;
-        
+
         default:
             break;
     }
@@ -87,4 +92,3 @@ void ClosestPoint::findClosestCallback(const sensor_msgs::LaserScan::ConstPtr& s
     _mask_pub.publish(mask);
     _scan_pub.publish(_scan_min);
 }
-
