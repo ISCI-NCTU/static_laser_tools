@@ -8,6 +8,8 @@
 	<param name="devicename" value="$(arg devicename)"/>
 </node>
 
+<node name="emergency_stop" pkg="static_laser_tools" type="emergency_stop_publisher.py" output="screen"/>
+
 <node name="sick_proc" pkg="static_laser_tools" type="closest_point" output="screen"> 
         <param name="final_offset" value="$(arg final_offset)"/>
         <param name="nb_scans_init" value="$(arg nb_scans_init)"/>
