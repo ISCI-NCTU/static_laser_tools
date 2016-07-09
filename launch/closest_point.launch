@@ -2,12 +2,18 @@
 
         <arg name="final_offset" default="0.1"/>
         <arg name="nb_scans_init" default="100"/>
+	<arg name="devicename" default="/dev/ttyUSB0"/>
 
-
-<node name="sick_proc" pkg="static_laser_tools" name="closest_point" output="screen"> 
-        <arg name="final_offset" value="$(arg final_offset)"/>
-        <arg name="nb_scans_init" value="$(arg nb_scans_init)"/>
+<node name="sicks300" pkg="sicks300" type="sick300_driver" output="screen">
+	<param name="devicename" value="$(arg devicename)"/>
 </node>
+
+<node name="sick_proc" pkg="static_laser_tools" type="closest_point" output="screen"> 
+        <param name="final_offset" value="$(arg final_offset)"/>
+        <param name="nb_scans_init" value="$(arg nb_scans_init)"/>
+</node>
+
+
 
 </launch>
 
