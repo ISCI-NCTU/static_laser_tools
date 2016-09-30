@@ -1,21 +1,20 @@
 <launch>
 
-        <arg name="final_offset" default="0.1"/>
-        <arg name="nb_scans_init" default="100"/>
-	<arg name="devicename" default="/dev/ttyUSB0"/>
+    <arg name="final_offset" default="0.1"/>
+    <arg name="nb_scans_init" default="100"/>
+    <arg name="devicename" default="/dev/ttyUSB0"/>
 
-<node name="sicks300" pkg="sicks300" type="sick300_driver" output="screen">
-	<param name="devicename" value="$(arg devicename)"/>
-</node>
+    <node name="sicks300" pkg="sicks300" type="sick300_driver" output="screen">
+        <param name="devicename" value="$(arg devicename)"/>
+    </node>
 
-<node name="emergency_stop" pkg="static_laser_tools" type="emergency_stop_publisher.py" output="screen"/>
+    <!--node name="emergency_stop" pkg="static_laser_tools" type="emergency_stop_publisher.py" output="screen"/-->
 
-<node name="sick_proc" pkg="static_laser_tools" type="closest_point" output="screen"> 
+    <node name="sick_proc" pkg="static_laser_tools" type="closest_point" output="screen">
         <param name="final_offset" value="$(arg final_offset)"/>
         <param name="nb_scans_init" value="$(arg nb_scans_init)"/>
-</node>
+    </node>
 
 
 
 </launch>
-
